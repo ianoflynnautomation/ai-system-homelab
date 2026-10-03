@@ -1,0 +1,4 @@
+creation_rules:
+  - path_regex: gitops/.*\.sops\.yaml$
+    encrypted_regex: '^(data|stringData)$'
+    age: age1yourpublickeyhere0000000000000000000000000000000000000000000

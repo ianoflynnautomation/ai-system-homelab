@@ -1,0 +1,58 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: n8n
+  namespace: ai-system
+spec:
+  interval: 1h
+  chart:
+    spec:
+      chart: n8n
+      version: 1.24.42
+      sourceRef:
+        kind: HelmRepository
+        name: community-charts
+        namespace: ai-system
+      interval: 30m
+  install:
+    timeout: 10m
+  upgrade:
+    cleanupOnFail: true
+    remediation:
+      retries: 3
+      strategy: rollback
+  driftDetection:
+    mode: enabled
+  maxHistory: 3
+
+  values:
+    db:
+      type: sqlite
+    existingEncryptionKeySecret: n8n-secrets
+    redis:
+      enabled: false
+    postgresql:
+      enabled: false
+    main:
+      persistence:
+        enabled: true
+        storageClass: local-path
+        size: 8Gi
+        mountPath: /home/node/.n8n
+      extraEnv:
+        - name: N8N_SECURE_COOKIE
+          value: "false"
+        - name: WEBHOOK_URL
+          value: "http://192.168.1.10:30678/"
+        - name: N8N_DIAGNOSTICS_ENABLED
+          value: "false"
+        - name: N8N_RUNNERS_ENABLED
+          value: "true"
+      resources:
+        requests: {cpu: 100m, memory: 256Mi}
+        limits: {cpu: "2", memory: 1Gi}
+    worker:
+      mode: regular
+    webhook:
+      mode: regular

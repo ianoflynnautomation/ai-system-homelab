@@ -1,0 +1,26 @@
+---
+extends: default
+
+rules:
+  line-length:
+    max: 200
+    level: warning
+  comments:
+    min-spaces-from-content: 1
+  truthy:
+    check-keys: false
+  document-start:
+    present: true
+  indentation:
+    spaces: 2
+    indent-sequences: true
+  braces:
+    min-spaces-inside: 0
+    max-spaces-inside: 1
+
+ignore: |
+  gitops/clusters/*/flux-system/
+  # Written by `sops --encrypt`: 4-space indent, no document start, long
+  # base64. Reformatting it would corrupt the MAC.
+  **/secret.sops.yaml
+  .venv/

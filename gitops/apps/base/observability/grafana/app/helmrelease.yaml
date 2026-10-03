@@ -1,0 +1,31 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: grafana-operator
+  namespace: observability
+spec:
+  interval: 1h
+  chartRef:
+    kind: OCIRepository
+    name: grafana-operator
+  install:
+    crds: CreateReplace
+    timeout: 10m
+  upgrade:
+    crds: CreateReplace
+    cleanupOnFail: true
+    remediation:
+      retries: 3
+      strategy: rollback
+  driftDetection:
+    mode: enabled
+  maxHistory: 3
+
+  values:
+    resources:
+      requests: {cpu: 10m, memory: 64Mi}
+      limits: {cpu: 200m, memory: 192Mi}
+    namespaceScope: true
+    serviceMonitor:
+      enabled: false

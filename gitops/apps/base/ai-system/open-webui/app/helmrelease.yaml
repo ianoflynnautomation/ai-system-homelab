@@ -1,0 +1,60 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: open-webui
+  namespace: ai-system
+spec:
+  interval: 1h
+  chartRef:
+    kind: OCIRepository
+    name: open-webui
+  install:
+    timeout: 10m
+  upgrade:
+    cleanupOnFail: true
+    remediation:
+      retries: 3
+      strategy: rollback
+  driftDetection:
+    mode: enabled
+  maxHistory: 3
+
+  values:
+    ollama:
+      enabled: false
+    ollamaUrls:
+      - "http://ollama:11434"
+    pipelines:
+      enabled: false
+    websocket:
+      enabled: true
+      manager: ""
+      redis:
+        enabled: false
+    enableOpenaiApi: true
+    openaiBaseApiUrls:
+    openaiApiKeysExistingSecret: open-webui-secrets
+    openaiApiKeysExistingSecretKey: OPENAI_API_KEYS
+    persistence:
+      enabled: true
+      storageClass: local-path
+      size: 8Gi
+    service:
+      type: NodePort
+      port: 80
+      containerPort: 8080
+      nodePort: 30080
+    extraEnvVars:
+      - name: ENABLE_PERSISTENT_CONFIG
+        value: "False"
+      - name: WEBUI_SECRET_KEY
+        valueFrom:
+          secretKeyRef:
+            name: open-webui-secrets
+            key: WEBUI_SECRET_KEY
+      - name: AIOHTTP_CLIENT_TIMEOUT
+        value: "300" 
+    resources:
+      requests: {cpu: 200m, memory: 1Gi}
+      limits: {cpu: "2", memory: 3Gi}

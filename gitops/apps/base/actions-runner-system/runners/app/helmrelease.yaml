@@ -1,0 +1,94 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: gha-isolated
+  namespace: arc-runners
+spec:
+  interval: 15m
+  chartRef:
+    kind: OCIRepository
+    name: gha-runner-scale-set
+  install:
+    crds: CreateReplace
+    timeout: 10m
+  upgrade:
+    crds: CreateReplace
+    cleanupOnFail: true
+    remediation:
+      retries: 3
+      strategy: rollback
+  driftDetection:
+    mode: warn
+  maxHistory: 3
+  dependsOn:
+    - name: arc
+      namespace: arc-systems
+
+  values:
+    githubConfigUrl: https://github.com/ianoflynnautomation/ai-system-homelab
+    githubConfigSecret: github-runner-auth
+    controllerServiceAccount:
+      name: arc-gha-rs-controller
+      namespace: arc-systems
+    runnerScaleSetName: gha-isolated
+    runnerGroup: default
+    minRunners: 0
+    maxRunners: 4
+    containerMode:
+      type: kubernetes-novolume
+    listenerTemplate:
+      spec:
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: 1000
+          runAsGroup: 1000
+          seccompProfile:
+            type: RuntimeDefault
+        containers:
+          - name: listener
+            securityContext:
+              allowPrivilegeEscalation: false
+              readOnlyRootFilesystem: true
+              capabilities:
+                drop: ["ALL"]
+            resources:
+              requests: {cpu: 10m, memory: 64Mi}
+              limits: {cpu: 200m, memory: 192Mi}
+    template:
+      metadata:
+        labels:
+          app.kubernetes.io/part-of: github-runner-k8s
+      spec:
+        automountServiceAccountToken: true
+        terminationGracePeriodSeconds: 60
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: 1001
+          runAsGroup: 1001
+          fsGroup: 1001
+          seccompProfile:
+            type: RuntimeDefault
+        containers:
+          - name: runner
+            image: ghcr.io/actions/actions-runner:latest
+            command: ["/home/runner/run.sh"]
+            securityContext:
+              allowPrivilegeEscalation: false
+              capabilities:
+                drop: ["ALL"]
+            env:
+              - name: ACTIONS_RUNNER_REQUIRE_JOB_CONTAINER
+                value: "true"
+              - name: ACTIONS_RUNNER_CONTAINER_HOOK_TEMPLATE
+                value: /home/runner/pod-templates/default.yaml
+            volumeMounts:
+              - name: hook-extension
+                mountPath: /home/runner/pod-templates
+            resources:
+              requests: {cpu: 100m, memory: 256Mi}
+              limits: {cpu: "1", memory: 1Gi}
+        volumes:
+          - name: hook-extension
+            configMap:
+              name: gha-runner-hook-extension

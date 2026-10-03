@@ -1,0 +1,32 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: gha-runner-hook-extension
+  namespace: arc-runners
+data:
+  default.yaml: |
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1001
+        runAsGroup: 1001
+        fsGroup: 1001
+        fsGroupChangePolicy: OnRootMismatch
+        seccompProfile:
+          type: RuntimeDefault
+
+      containers:
+        # "$job" is ARC's placeholder for the workflow's container block.
+        - name: "$job"
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+          # This is where workflow steps actually run, so it gets the real
+          # budget — the runner container beside it only supervises. Sized for
+          # a 16 CPU / 32 GiB node; see runners/app/quota.yaml for how this
+          # multiplies out against maxRunners.
+          resources:
+            requests: {cpu: 250m, memory: 512Mi}
+            limits: {cpu: "2", memory: 4Gi}

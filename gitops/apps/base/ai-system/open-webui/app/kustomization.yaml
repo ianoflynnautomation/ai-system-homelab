@@ -1,0 +1,11 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: ai-system
+resources:
+  - ocirepository.yaml
+  - helmrelease.yaml
+  - networkpolicy.yaml
+  # Build secret.sops.yaml from secret.sops.yaml.example, `sops --encrypt`
+  # it, then uncomment this line. See README.md step 3.
+  # - secret.sops.yaml
