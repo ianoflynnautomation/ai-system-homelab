@@ -37,7 +37,7 @@ Build tooling lives in job container images, not on the host.
 
 # Example workflow: scheduled AI job digest
 
-![ai-job-digest](images/ai-job-digest-workflow.png)
+![ai-job-digest](images/job-digest-workflow.png)
 
 A worked example of the `ai-system` stack doing something end to end: n8n on a
 schedule, Ollama scoring text locally, and an email digest at the far end.
@@ -67,7 +67,7 @@ Schedule Trigger
 
 # Email example
 
-![email-example](images/email-example.png)
+![email-example](images/job-digest-email-example.png)
 
 ---
 
